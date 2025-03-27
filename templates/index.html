@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python File Hosting</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { width: 50%; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 10px; text-align: center; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Upload and Host Python Files</h1>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Upload</button>
+    <div class="container">
+        <h2>Uploaded Files</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="fileList"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function uploadFile() {
+            let fileInput = document.getElementById("fileInput").files[0];
+            if (!fileInput) return alert("Select a file first!");
+            let formData = new FormData();
+            formData.append("file", fileInput);
+
+            fetch("/upload", { method: "POST", body: formData })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                loadFiles();
+            })
+            .catch(err => console.error("Upload error:", err));
+        }
+
+        function loadFiles() {
+            fetch("/files")
+            .then(res => res.json())
+            .then(files => {
+                let fileList = document.getElementById("fileList");
+                fileList.innerHTML = "";
+                files.forEach(file => {
+                    fileList.innerHTML += `
+                        <tr>
+                            <td>${file}</td>
+                            <td>
+                                <button onclick="runFile('${file}')">Run</button>
+                                <button onclick="stopFile('${file}')">Stop</button>
+                            </td>
+                        </tr>`;
+                });
+            });
+        }
+
+        function runFile(filename) {
+            fetch("/run?filename=" + filename)
+            .then(res => res.json())
+            .then(data => alert(data.message));
+        }
+
+        function stopFile(filename) {
+            fetch("/stop?filename=" + filename)
+            .then(res => res.json())
+            .then(data => alert(data.message));
+        }
+
+        window.onload = loadFiles;
+    </script>
+</body>
+</html>
